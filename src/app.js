@@ -17,6 +17,9 @@ const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 
 const app = express();
 
+// Trust the reverse proxy (Render) to properly resolve user IPs for rate limiting
+app.set('trust proxy', 1);
+
 app.use(helmet());
 app.use(cors({ origin: config.clientUrl === '*' ? true : config.clientUrl, credentials: true }));
 app.use(compression());

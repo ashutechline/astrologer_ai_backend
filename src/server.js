@@ -10,7 +10,7 @@ async function start() {
   await connectDB();
   startScheduledJobs();
 
-  server = app.listen(config.port, () => {
+  server = app.listen(config.port, '0.0.0.0', () => {
     logger.info(`Cosmic AI backend listening on port ${config.port} (${config.env})`);
   });
 }
