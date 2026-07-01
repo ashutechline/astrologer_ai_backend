@@ -9,7 +9,8 @@ const router = express.Router();
 router.use(requireAuth, loadUser);
 
 router.post('/chat', validate(v.sendMessage), ctrl.chatStream);
-router.get('/chat/history', validate(v.historyQuery), ctrl.getHistory);
+router.get('/chat/history', ctrl.getHistory);
+router.get('/chat/conversation-history', validate(v.conversationHistoryQuery), ctrl.getConversationHistory);
 router.get('/quota', ctrl.getQuota);
 router.post('/chat/:messageId/bookmark', validate(v.bookmarkParam), ctrl.toggleBookmark);
 router.post('/tutor', validate(v.tutorMessage), ctrl.tutorStream);

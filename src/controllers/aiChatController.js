@@ -148,8 +148,14 @@ async function tutorStream(req, res) {
   res.end();
 }
 
-/** GET /ai/chat/history?conversationId= */
+/** GET /ai/chat/history */
 async function getHistory(req, res) {
+  const conversations = await AiConversation.find({ owner: req.userId }).sort({ lastMessageAt: -1 });
+  sendSuccess(res, { data: conversations });
+}
+
+/** GET /ai/chat/conversation-history?conversationId= */
+async function getConversationHistory(req, res) {
   const { conversationId } = req.query;
   const convo = await AiConversation.findOne({ _id: conversationId, owner: req.userId });
   if (!convo) throw ApiError.notFound('Conversation not found', 'CONVERSATION_NOT_FOUND');
@@ -173,4 +179,4 @@ async function toggleBookmark(req, res) {
   sendSuccess(res, { data: message });
 }
 
-module.exports = { chatStream, tutorStream, getHistory, getQuota, toggleBookmark };
+module.exports = { chatStream, tutorStream, getHistory, getConversationHistory, getQuota, toggleBookmark };

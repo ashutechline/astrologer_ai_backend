@@ -17,7 +17,7 @@ const tutorMessage = {
   }),
 };
 
-const historyQuery = {
+const conversationHistoryQuery = {
   query: Joi.object({ conversationId: objectId.required() }),
 };
 
@@ -25,4 +25,4 @@ const bookmarkParam = {
   params: Joi.object({ messageId: objectId.required() }),
 };
 
-module.exports = { sendMessage, tutorMessage, historyQuery, bookmarkParam };
+module.exports = { sendMessage, tutorMessage, conversationHistoryQuery, bookmarkParam };
