@@ -112,6 +112,17 @@ async function planBestDay(req, res) {
   sendSuccess(res, { data: { activityType, bestDays: candidates.slice(0, 5), allDays: candidates } });
 }
 
+/** GET /calendar/upcoming?limit=3 */
+async function getUpcomingEvents(req, res) {
+  const limit = parseInt(req.query.limit, 10) || 3;
+  const now = new Date();
+  const events = await CalendarEvent.find({ date: { $gte: now } })
+    .sort({ date: 1 })
+    .limit(limit);
+
+  sendSuccess(res, { data: events });
+}
+
 module.exports = {
   getMonthCalendar,
   getDayDetail,
@@ -119,4 +130,5 @@ module.exports = {
   getTransitTimeline,
   getReturns,
   planBestDay,
+  getUpcomingEvents,
 };

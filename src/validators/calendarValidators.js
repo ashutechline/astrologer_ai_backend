@@ -38,4 +38,10 @@ const bestDayBody = {
   }),
 };
 
-module.exports = { monthQuery, dayQuery, chartIdQuery, timelineQuery, bestDayBody };
+const upcomingQuery = {
+  query: Joi.object({
+    limit: Joi.number().integer().min(1).max(20).default(3),
+  }),
+};
+
+module.exports = { monthQuery, dayQuery, chartIdQuery, timelineQuery, bestDayBody, upcomingQuery };

@@ -9,6 +9,7 @@ const router = express.Router();
 router.use(requireAuth, loadUser);
 
 router.get('/calendar/month', validate(v.monthQuery), ctrl.getMonthCalendar);
+router.get('/calendar/upcoming', validate(v.upcomingQuery), ctrl.getUpcomingEvents);
 router.get('/calendar/day', validate(v.dayQuery), ctrl.getDayDetail);
 
 router.get('/transits/live', validate(v.chartIdQuery), ctrl.getLiveTransits);
