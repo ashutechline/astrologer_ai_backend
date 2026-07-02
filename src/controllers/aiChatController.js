@@ -36,9 +36,6 @@ async function chatStream(req, res) {
   const { chartId, message, conversationId } = req.body;
   const isPro = req.user.subscription.isPro;
 
-  // Server-side quota enforcement — never trust the client's own counter
-  await aiQuotaService.consumeQuotaOrThrow(req.userId, isPro);
-
   const chart = await BirthChart.findOne({ _id: chartId, owner: req.userId });
   if (!chart) throw ApiError.notFound('Chart not found', 'CHART_NOT_FOUND');
 
