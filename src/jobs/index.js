@@ -1,6 +1,5 @@
 const cron = require('node-cron');
 const logger = require('../config/logger');
-const { generateDailyHoroscopes, generateWeeklyHoroscopes } = require('./generateDailyContent');
 const {
   sendDailyHoroscopeNotifications,
   sendMoonAlertNotifications,
@@ -22,12 +21,7 @@ function safeRun(name, fn) {
  * unless a timezone option is passed — pin one explicitly in production).
  */
 function startScheduledJobs() {
-  // 00:05 UTC daily — generate content first, then notify 15 min later once it's guaranteed to exist
-  cron.schedule('5 0 * * *', safeRun('generateDailyHoroscopes', generateDailyHoroscopes));
   cron.schedule('20 0 * * *', safeRun('sendDailyHoroscopeNotifications', sendDailyHoroscopeNotifications));
-
-  // Mondays 00:10 UTC — weekly horoscope generation
-  cron.schedule('10 0 * * 1', safeRun('generateWeeklyHoroscopes', generateWeeklyHoroscopes));
 
   // Every hour — check for moon/eclipse events and retrograde transitions landing today
   cron.schedule('0 * * * *', safeRun('sendMoonAlertNotifications', sendMoonAlertNotifications));

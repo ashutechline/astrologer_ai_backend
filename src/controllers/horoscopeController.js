@@ -4,6 +4,7 @@ const ApiError = require('../utils/ApiError');
 const { sendSuccess } = require('../utils/apiResponse');
 const { getCosmicWeather } = require('../services/cosmicWeatherService');
 const { ZODIAC_SIGNS } = require('../services/ephemeris/astrologyMath');
+const geminiService = require('../services/geminiService');
 
 function todayKey() {
   return new Date().toISOString().slice(0, 10);
@@ -19,25 +20,47 @@ function isoWeekKey(date = new Date()) {
 /** GET /horoscopes/daily?sign=Aries */
 async function getDailyHoroscope(req, res) {
   const { sign } = req.query;
-  const doc = await Horoscope.findOne({ sign, period: 'daily', dateKey: todayKey() });
-  if (!doc) throw ApiError.notFound('Horoscope not generated yet for today', 'HOROSCOPE_NOT_READY');
+  const dateKey = todayKey();
+  let doc = await Horoscope.findOne({ sign, period: 'daily', dateKey });
+
+  if (!doc) {
+    const content = await geminiService.generateText({
+      systemPrompt: 'You are Cosmic, an expert AI astrologer. Write engaging, specific daily horoscopes — avoid generic filler.',
+      userMessage: `Write today's daily horoscope for ${sign} in 3-4 sentences. Cover general energy, and one practical tip for the day.`,
+      maxTokens: 1000,
+    });
+    doc = await Horoscope.create({ sign, period: 'daily', dateKey, content });
+  }
+
   sendSuccess(res, { data: doc });
 }
 
 /** GET /horoscopes/daily/all */
 async function getAllDailyHoroscopes(req, res) {
-  const docs = await Horoscope.find({ period: 'daily', dateKey: todayKey() });
-  // Ensure stable, complete ordering even if some signs haven't generated yet
+  const dateKey = todayKey();
+  const docs = await Horoscope.find({ period: 'daily', dateKey });
   const bySign = Object.fromEntries(docs.map((d) => [d.sign, d]));
+
   const ordered = ZODIAC_SIGNS.map((sign) => bySign[sign] || { sign, content: null, pending: true });
+
   sendSuccess(res, { data: ordered });
 }
 
 /** GET /horoscopes/weekly?sign=Aries */
 async function getWeeklyHoroscope(req, res) {
   const { sign } = req.query;
-  const doc = await Horoscope.findOne({ sign, period: 'weekly', dateKey: isoWeekKey() });
-  if (!doc) throw ApiError.notFound('Weekly horoscope not generated yet', 'HOROSCOPE_NOT_READY');
+  const dateKey = isoWeekKey();
+  let doc = await Horoscope.findOne({ sign, period: 'weekly', dateKey });
+
+  if (!doc) {
+    const content = await geminiService.generateText({
+      systemPrompt: 'You are Cosmic, an expert AI astrologer. Write engaging, specific weekly horoscopes — avoid generic filler.',
+      userMessage: `Write this week's horoscope for ${sign} in 1-2 sentences, covering love, career, and overall energy for the week ahead.`,
+      maxTokens: 1000,
+    });
+    doc = await Horoscope.create({ sign, period: 'weekly', dateKey, content });
+  }
+
   sendSuccess(res, { data: doc });
 }
 
