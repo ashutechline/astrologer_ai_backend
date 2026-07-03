@@ -1,5 +1,5 @@
 const { PLANETS, julianDayUT, calcPlanetUT } = require('./swissEphemerisClient');
-const { longitudeToSign, computeAspects } = require('./astrologyMath');
+const { longitudeToSign, computeAspects, TRANSIT_ASPECT_DEFINITIONS, angularDifference } = require('./astrologyMath');
 
 /** Computes current planetary positions for an arbitrary UTC instant ("the sky right now"). */
 async function calculateCurrentSky(atDate = new Date()) {
@@ -36,15 +36,34 @@ function impactLevelFor(transitPlanetKey, aspectName) {
  * @param {Array} natalPlanets - chart.planets from calculateNatalChart
  */
 async function calculateLiveTransits(natalPlanets, atDate = new Date()) {
-  const { planets: currentPlanets } = await calculateCurrentSky(atDate);
-  const rawAspects = computeAspects(currentPlanets, natalPlanets, false);
+  const { jd: transitJd, planets: currentPlanets } = await calculateCurrentSky(atDate);
+  const transits = [];
 
-  return rawAspects.map((a) => ({
-    ...a,
-    transitPlanet: a.planetA,
-    natalPlanet: a.planetB,
-    impact: impactLevelFor(a.planetA, a.aspect),
-  }));
+  for (const tPlanet of currentPlanets) {
+    for (const nPlanet of natalPlanets) {
+      const separation = angularDifference(tPlanet.longitude, nPlanet.longitude);
+      for (const def of TRANSIT_ASPECT_DEFINITIONS) {
+        const orbDev = Math.abs(separation - def.angle);
+        if (orbDev <= def.orb) {
+          transits.push({
+            transiting_planet: tPlanet.name,
+            aspect_type: def.name,
+            natal_planet: nPlanet.name,
+            exact_aspect_angle: def.angle,
+            calculated_separation: Number(separation.toFixed(2)),
+            orb_deviation: Number(orbDev.toFixed(2)),
+            is_exact_under_one_degree: orbDev < 1.0,
+            // Keep internal fields for other endpoints
+            impact: impactLevelFor(tPlanet.key, def.name),
+            transitPlanetKey: tPlanet.key
+          });
+          break;
+        }
+      }
+    }
+  }
+
+  return { transitJd, transits };
 }
 
 /**

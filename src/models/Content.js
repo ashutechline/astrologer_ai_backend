@@ -59,7 +59,7 @@ const calendarEventSchema = new Schema(
     title: { type: String, required: true },
     type: {
       type: String,
-      enum: ['eclipse', 'full_moon', 'new_moon', 'retrograde_start', 'retrograde_end', 'solstice', 'equinox'],
+      enum: ['eclipse', 'full_moon', 'new_moon', 'retrograde_start', 'retrograde_end', 'solstice', 'equinox', 'ingress'],
       required: true,
     },
     date: { type: Date, required: true, index: true },

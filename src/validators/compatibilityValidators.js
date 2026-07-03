@@ -4,6 +4,7 @@ const objectId = Joi.string().hex().length(24);
 const modeEnum = Joi.string().valid('romantic', 'friendship', 'professional');
 
 const birthDataSchema = Joi.object({
+  label: Joi.string().optional(),
   birthDate: Joi.string().pattern(/^(18|19|20|21|22|23)\d{2}-\d{2}-\d{2}$/).message('birthDate year must be between 1800 and 2399').required(),
   birthTime: Joi.string().pattern(/^\d{2}:\d{2}$/).allow(null),
   timeUnknown: Joi.boolean().default(false),

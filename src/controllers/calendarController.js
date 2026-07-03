@@ -47,8 +47,17 @@ async function getLiveTransits(req, res) {
   const chart = await BirthChart.findOne({ _id: chartId, owner: req.userId });
   if (!chart) throw ApiError.notFound('Chart not found', 'CHART_NOT_FOUND');
 
-  const transits = await calculateLiveTransits(chart.computed.planets);
-  sendSuccess(res, { data: transits });
+  const { transitJd, transits } = await calculateLiveTransits(chart.computed.planets);
+  sendSuccess(res, {
+    data: {
+      calculation_metadata: {
+        natal_julian_day: chart.computed.jd,
+        transit_julian_day: transitJd,
+        coordinate_system: 'Geocentric Ecliptic Tropical',
+      },
+      active_transits: transits,
+    },
+  });
 }
 
 /** GET /transits/timeline?chartId=&months=12 */
@@ -65,7 +74,7 @@ async function getTransitTimeline(req, res) {
   for (let i = 0; i < monthsAllowed; i++) {
     const checkDate = new Date();
     checkDate.setUTCMonth(checkDate.getUTCMonth() + i);
-    const transits = await calculateLiveTransits(chart.computed.planets, checkDate);
+    const { transits } = await calculateLiveTransits(chart.computed.planets, checkDate);
     monthlySnapshots.push({
       monthOffset: i,
       monthLabel: checkDate.toISOString().slice(0, 7),
@@ -101,9 +110,9 @@ async function planBestDay(req, res) {
 
   for (let t = start.getTime(); t <= end.getTime(); t += dayMs) {
     const checkDate = new Date(t);
-    const transits = await calculateLiveTransits(chart.computed.planets, checkDate);
-    const harmonious = transits.filter((tr) => ['Trine', 'Sextile'].includes(tr.aspect)).length;
-    const tense = transits.filter((tr) => ['Square', 'Opposition'].includes(tr.aspect)).length;
+    const { transits } = await calculateLiveTransits(chart.computed.planets, checkDate);
+    const harmonious = transits.filter((tr) => ['Trine', 'Sextile'].includes(tr.aspect_type)).length;
+    const tense = transits.filter((tr) => ['Square', 'Opposition'].includes(tr.aspect_type)).length;
     candidates.push({ date: checkDate.toISOString().slice(0, 10), score: harmonious - tense, transitCount: transits.length });
   }
 

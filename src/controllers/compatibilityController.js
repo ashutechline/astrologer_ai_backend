@@ -56,7 +56,11 @@ async function createSynastry(req, res) {
     // Partner entered manually — saved under the requesting user's account, not flagged as primary.
     // Bypasses the free-tier vault limit since this is a transient lookup chart for comparison,
     // not an additional chart the user is "keeping" in their own vault.
-    chartB = await createChart(req.userId, { ...partnerBirthData, isPrimary: false }, false, { bypassVaultLimit: true });
+    chartB = await createChart(req.userId, { 
+      label: partnerBirthData.label || 'Synastry Partner',
+      ...partnerBirthData, 
+      isPrimary: false 
+    }, false, { bypassVaultLimit: true });
   } else {
     throw ApiError.badRequest('Provide either chartIdB or partnerBirthData', 'MISSING_PARTNER_DATA');
   }
