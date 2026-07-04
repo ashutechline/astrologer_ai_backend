@@ -72,7 +72,18 @@ async function getNumerologyProfile(req, res) {
   const personalYearSeed = `${day}${month}${today.getUTCFullYear()}`;
   const personalYearNumber = digitSum(personalYearSeed);
 
-  sendSuccess(res, { data: { lifePathNumber, personalYearNumber, year: today.getUTCFullYear() } });
+  const lifePathDescription = "Represents your core purpose and primary path in this incarnation.";
+  const personalYearDescription = "A period of harvest, finance alignment, and power dynamics. Ideal for executing business negotiations and manifesting concrete materials.";
+
+  sendSuccess(res, { 
+    data: { 
+      lifePathNumber, 
+      lifePathDescription,
+      personalYearNumber, 
+      personalYearDescription,
+      year: today.getUTCFullYear() 
+    } 
+  });
 }
 
 /** GET /rituals/:phase */
