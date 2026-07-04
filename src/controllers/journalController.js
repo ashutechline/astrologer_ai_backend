@@ -23,7 +23,7 @@ async function listEntries(req, res) {
     (grouped[key] = grouped[key] || []).push(entry);
   }
 
-  sendSuccess(res, { data: { grouped, entries } });
+  sendSuccess(res, { data: { entries: grouped } });
 }
 
 /** POST /journal/entries */

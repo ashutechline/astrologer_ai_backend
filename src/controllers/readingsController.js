@@ -86,12 +86,17 @@ async function getNumerologyProfile(req, res) {
   });
 }
 
-/** GET /rituals/:phase */
+/** GET /rituals/:phase? */
 async function getMoonRitual(req, res) {
   const { phase } = req.params;
-  const ritual = await MoonRitual.findOne({ phase });
-  if (!ritual) throw ApiError.notFound('Ritual guide not found', 'RITUAL_NOT_FOUND');
-  sendSuccess(res, { data: ritual });
+  if (phase) {
+    const ritual = await MoonRitual.findOne({ phase });
+    if (!ritual) throw ApiError.notFound('Ritual guide not found', 'RITUAL_NOT_FOUND');
+    sendSuccess(res, { data: ritual });
+  } else {
+    const rituals = await MoonRitual.find();
+    sendSuccess(res, { data: rituals });
+  }
 }
 
 /** GET /angel-numbers/:number */

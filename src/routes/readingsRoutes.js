@@ -8,7 +8,7 @@ const router = express.Router();
 
 router.get('/tarot/daily', requireAuth, loadUser, validate(v.tarotQuery), ctrl.getDailyTarot);
 router.get('/numerology/profile', requireAuth, loadUser, validate(v.chartIdQuery), ctrl.getNumerologyProfile);
-router.get('/rituals/:phase', validate(v.phaseParam), ctrl.getMoonRitual); // public reference content
+router.get('/rituals/:phase?', validate(v.phaseParam), ctrl.getMoonRitual); // public reference content
 router.get('/angel-numbers/:number', validate(v.numberParam), ctrl.getAngelNumber); // public reference content
 
 module.exports = router;
