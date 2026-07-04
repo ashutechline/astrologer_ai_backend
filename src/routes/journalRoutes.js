@@ -6,6 +6,9 @@ const { requireAuth, loadUser, requirePro } = require('../middleware/auth');
 
 const router = express.Router();
 
+// Public — used by the UI to populate the tag picker before authentication
+router.get('/tags', ctrl.getTags);
+
 router.use(requireAuth, loadUser, requirePro); // entire Journal module is premium per the feature catalogue
 
 router.get('/entries', validate(v.listEntries), ctrl.listEntries);

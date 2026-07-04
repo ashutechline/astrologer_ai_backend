@@ -5,6 +5,7 @@ const { sendSuccess } = require('../utils/apiResponse');
 const geminiService = require('../services/geminiService');
 const { calculateLiveTransits, calculateCurrentSky } = require('../services/ephemeris/transitService');
 const { getMoonPhaseName } = require('../services/cosmicWeatherService');
+const { JOURNAL_TAGS, JOURNAL_TAG_EMOJIS } = require('../utils/journalTags');
 
 /** GET /journal/entries?month=YYYY-MM */
 async function listEntries(req, res) {
@@ -102,6 +103,12 @@ async function getMonthlyReflection(req, res) {
   sendSuccess(res, { data: { month, reflection, entryCount: entries.length } });
 }
 
+/** GET /journal/tags — returns the allowed tag list with emojis for mobile UI */
+function getTags(req, res) {
+  const tags = JOURNAL_TAGS.map((name) => ({ name, emoji: JOURNAL_TAG_EMOJIS[name] }));
+  sendSuccess(res, { data: { tags } });
+}
+
 module.exports = {
   listEntries,
   createEntry,
@@ -109,4 +116,5 @@ module.exports = {
   deleteEntry,
   getPromptOfTheDay,
   getMonthlyReflection,
+  getTags,
 };

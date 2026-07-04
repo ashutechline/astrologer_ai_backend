@@ -1,4 +1,5 @@
 const Joi = require('joi');
+const { JOURNAL_TAGS } = require('../utils/journalTags');
 
 const objectId = Joi.string().hex().length(24);
 
@@ -6,7 +7,7 @@ const listEntries = {
   query: Joi.object({
     month: Joi.string().pattern(/^\d{4}-\d{2}$/),
     search: Joi.string().max(200),
-    tag: Joi.string().max(40),
+    tag: Joi.string().valid(...JOURNAL_TAGS),
   }),
 };
 
@@ -15,7 +16,7 @@ const createEntry = {
     date: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).required(),
     text: Joi.string().trim().min(1).max(5000).required(),
     moodEmoji: Joi.string().max(8).allow(null),
-    tags: Joi.array().items(Joi.string().max(40)).default([]),
+    tags: Joi.array().items(Joi.string().valid(...JOURNAL_TAGS)).default([]),
   }),
 };
 
@@ -24,7 +25,7 @@ const updateEntry = {
   body: Joi.object({
     text: Joi.string().trim().min(1).max(5000),
     moodEmoji: Joi.string().max(8).allow(null),
-    tags: Joi.array().items(Joi.string().max(40)),
+    tags: Joi.array().items(Joi.string().valid(...JOURNAL_TAGS)),
   }).min(1),
 };
 
