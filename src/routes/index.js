@@ -17,5 +17,6 @@ router.use('/community', require('./communityRoutes'));
 router.use('/learn', require('./learnRoutes'));
 router.use('/billing', require('./billingRoutes'));
 router.use('/settings', require('./settingsRoutes'));
+router.use('/', require('./uploadRoutes')); // mounts /upload-file
 
 module.exports = router;
