@@ -3,6 +3,7 @@ const BirthChart = require('../models/BirthChart');
 const ApiError = require('../utils/ApiError');
 const { sendSuccess } = require('../utils/apiResponse');
 const { calculateLiveTransits, findUpcomingReturns } = require('../services/ephemeris/transitService');
+const { calculatePlanetaryHours } = require('../services/ephemeris/planetaryHoursService');
 
 /** GET /calendar/month?year=&month= */
 async function getMonthCalendar(req, res) {
@@ -132,6 +133,17 @@ async function getUpcomingEvents(req, res) {
   sendSuccess(res, { data: events });
 }
 
+/** GET /calendar/planetary-hours?date=&lat=&lon= */
+async function getPlanetaryHours(req, res) {
+  const { date, lat, lon } = req.query;
+  try {
+    const hours = calculatePlanetaryHours(date, Number(lat), Number(lon));
+    sendSuccess(res, { data: { date, lat: Number(lat), lon: Number(lon), planetaryHours: hours } });
+  } catch (err) {
+    throw ApiError.badRequest(err.message || 'Error calculating planetary hours');
+  }
+}
+
 module.exports = {
   getMonthCalendar,
   getDayDetail,
@@ -140,4 +152,5 @@ module.exports = {
   getReturns,
   planBestDay,
   getUpcomingEvents,
+  getPlanetaryHours,
 };

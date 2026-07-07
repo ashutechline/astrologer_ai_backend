@@ -10,6 +10,7 @@ const planetSchema = new Schema(
     degreeInSign: Number,
     speed: Number,
     retrograde: Boolean,
+    house: Number,
   },
   { _id: false }
 );

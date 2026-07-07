@@ -22,6 +22,24 @@ function toUtcDate(dateStr, timeStr, utcOffsetMinutes) {
 }
 
 /**
+ * Finds which house a given longitude falls into based on house cusps.
+ */
+function getHouseForLongitude(planetLongitude, houses) {
+  if (!houses || houses.length < 12) return null;
+  for (let i = 0; i < 12; i++) {
+    const currentCusp = houses[i].longitude;
+    const nextCusp = houses[(i + 1) % 12].longitude;
+    if (currentCusp <= nextCusp) {
+      if (planetLongitude >= currentCusp && planetLongitude < nextCusp) return houses[i].house;
+    } else {
+      // Cusp crosses the 360/0 Aries point
+      if (planetLongitude >= currentCusp || planetLongitude < nextCusp) return houses[i].house;
+    }
+  }
+  return null;
+}
+
+/**
  * Computes a full natal chart: planet positions, house cusps, ascendant/MC, and aspects.
  *
  * @param {object} input
@@ -96,9 +114,15 @@ async function calculateNatalChart(input) {
 
     ascendant = longitudeToSign(asc);
     midheaven = longitudeToSign(mc);
+
+    // Assign house positions to each planet now that houses are calculated
+    for (const planet of planets) {
+      planet.house = getHouseForLongitude(planet.longitude, houses);
+    }
   }
 
   const aspects = computeAspects(planets, planets, true);
+
 
   return {
     jd,

@@ -11,6 +11,7 @@ router.use(requireAuth, loadUser);
 router.get('/calendar/month', validate(v.monthQuery), ctrl.getMonthCalendar);
 router.get('/calendar/upcoming', validate(v.upcomingQuery), ctrl.getUpcomingEvents);
 router.get('/calendar/day', validate(v.dayQuery), ctrl.getDayDetail);
+router.get('/calendar/planetary-hours', validate(v.planetaryHourQuery), ctrl.getPlanetaryHours);
 
 router.get('/transits/live', validate(v.chartIdQuery), ctrl.getLiveTransits);
 // Timeline itself enforces the 3-month free preview internally rather than a hard requirePro gate,
