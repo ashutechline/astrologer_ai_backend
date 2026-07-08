@@ -12,7 +12,7 @@ router.get('/horoscopes/daily/all', ctrl.getAllDailyHoroscopes);
 router.get('/horoscopes/weekly', validate(v.signQuery), ctrl.getWeeklyHoroscope);
 
 // Cosmic weather and lucky widget are personalized — require auth
-router.get('/cosmic-weather/today', requireAuth, loadUser, validate(v.optionalChartIdQuery), ctrl.getCosmicWeatherToday);
+router.get('/cosmic-weather/today', requireAuth, loadUser, validate(v.cosmicWeatherQuery), ctrl.getCosmicWeatherToday);
 router.get('/lucky/today', requireAuth, loadUser, validate(v.chartIdQuery), ctrl.getLuckyToday);
 
 module.exports = router;

@@ -18,4 +18,14 @@ const optionalChartIdQuery = {
   query: Joi.object({ chartId: objectId }),
 };
 
-module.exports = { signQuery, chartIdQuery, optionalChartIdQuery, ZODIAC_SIGNS };
+const cosmicWeatherQuery = {
+  query: Joi.object({
+    chartId: objectId,
+    lat: Joi.number(),
+    lng: Joi.number(),
+    timezone: Joi.string(),
+    date: Joi.string(),
+  }),
+};
+
+module.exports = { signQuery, chartIdQuery, optionalChartIdQuery, cosmicWeatherQuery, ZODIAC_SIGNS };
