@@ -1,5 +1,5 @@
-const { PLANETS, julianDayUT, calcPlanetUT } = require('./swissEphemerisClient');
-const { longitudeToSign, computeAspects, TRANSIT_ASPECT_DEFINITIONS, angularDifference } = require('./astrologyMath');
+const { PLANETS, julianDayUT, calcPlanetUT, calcPlanetDeclination } = require('./swissEphemerisClient');
+const { longitudeToSign, computeAspects, TRANSIT_ASPECT_DEFINITIONS, angularDifference, formatDeclination } = require('./astrologyMath');
 
 /** Computes current planetary positions for an arbitrary UTC instant ("the sky right now"). */
 async function calculateCurrentSky(atDate = new Date()) {
@@ -7,6 +7,7 @@ async function calculateCurrentSky(atDate = new Date()) {
   const planets = [];
   for (const planet of PLANETS) {
     const body = await calcPlanetUT(jd, planet.id);
+    const decVal = await calcPlanetDeclination(jd, planet.id);
     const { sign, degreeInSign } = longitudeToSign(body.longitude);
     planets.push({
       key: planet.key,
@@ -16,6 +17,8 @@ async function calculateCurrentSky(atDate = new Date()) {
       degreeInSign: Number(degreeInSign.toFixed(2)),
       speed: body.longitudeSpeed,
       retrograde: body.longitudeSpeed < 0,
+      declination: Number(decVal.toFixed(4)),
+      declinationFormatted: formatDeclination(decVal),
     });
   }
   return { jd, planets };
@@ -103,4 +106,54 @@ async function findUpcomingReturns(natalPlanets, monthsAhead = 12) {
   return results;
 }
 
-module.exports = { calculateCurrentSky, calculateLiveTransits, findUpcomingReturns, impactLevelFor };
+function getTransitHouse(longitude, natalHouses) {
+  if (!natalHouses || natalHouses.length !== 12) return null;
+  for (let i = 0; i < 12; i++) {
+    const currentHouse = natalHouses[i];
+    const nextHouse = natalHouses[(i + 1) % 12];
+    
+    let start = currentHouse.longitude;
+    let end = nextHouse.longitude;
+    
+    if (end <= start) {
+      if (longitude >= start || longitude < end) {
+        return currentHouse.house;
+      }
+    } else {
+      if (longitude >= start && longitude < end) {
+        return currentHouse.house;
+      }
+    }
+  }
+  return null;
+}
+
+async function enrichChartWithTransits(chart, atDate = new Date()) {
+  const chartObj = chart.toObject ? chart.toObject() : JSON.parse(JSON.stringify(chart));
+  if (!chartObj.computed) return chartObj;
+
+  const { planets: currentPlanets } = await calculateCurrentSky(atDate);
+  const transitPlanets = currentPlanets.map(planet => {
+    const house = getTransitHouse(planet.longitude, chartObj.computed.houses);
+    return {
+      ...planet,
+      house
+    };
+  });
+
+  chartObj.computed.transitPlanets = transitPlanets;
+
+  const { transits } = await calculateLiveTransits(chartObj.computed.planets, atDate);
+  chartObj.computed.transits = transits;
+
+  return chartObj;
+}
+
+module.exports = { 
+  calculateCurrentSky, 
+  calculateLiveTransits, 
+  findUpcomingReturns, 
+  impactLevelFor, 
+  getTransitHouse, 
+  enrichChartWithTransits 
+};

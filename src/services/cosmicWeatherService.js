@@ -1,5 +1,6 @@
 const SunCalc = require('suncalc');
 const moment = require('moment-timezone');
+const { find: findGeoTz } = require('geo-tz');
 const { calculateCurrentSky } = require('./ephemeris/transitService');
 const { angularDifference } = require('./ephemeris/astrologyMath');
 
@@ -90,16 +91,27 @@ async function getCosmicWeather({ natalPlanets = null, natalHouses = null, atDat
   }
   const score = Math.max(1, Math.min(10, 5 + harmonious - tense));
 
+  let actualTimezone = timezone;
+  
   // SunCalc astronomical times
   let sunrise = '-', sunset = '-', moonrise = '-', moonset = '-';
   if (lat != null && lng != null) {
+    try {
+      const tzNames = findGeoTz(lat, lng);
+      if (tzNames && tzNames.length > 0) {
+        actualTimezone = tzNames[0]; // Resolves to a valid IANA string like 'Asia/Kolkata'
+      }
+    } catch (e) {
+      // fallback to the client-provided timezone or UTC
+    }
+
     const sunTimes = SunCalc.getTimes(atDate, lat, lng);
-    sunrise = formatTime(sunTimes.sunrise, timezone);
-    sunset = formatTime(sunTimes.sunset, timezone);
+    sunrise = formatTime(sunTimes.sunrise, actualTimezone);
+    sunset = formatTime(sunTimes.sunset, actualTimezone);
 
     const moonTimes = SunCalc.getMoonTimes(atDate, lat, lng);
-    moonrise = formatTime(moonTimes.rise, timezone);
-    moonset = formatTime(moonTimes.set, timezone);
+    moonrise = formatTime(moonTimes.rise, actualTimezone);
+    moonset = formatTime(moonTimes.set, actualTimezone);
   }
 
   const transitHouse = getTransitHouse(moon.longitude, natalHouses);

@@ -81,12 +81,22 @@ function ayanamsaLahiri(jd) {
   });
 }
 
+function calcPlanetDeclination(jd, planetId) {
+  return new Promise((resolve, reject) => {
+    swisseph.swe_calc_ut(jd, planetId, swisseph.SEFLG_EQUATORIAL | swisseph.SEFLG_SWIEPH, (body) => {
+      if (body.error) return reject(new Error(body.error));
+      resolve(body.declination);
+    });
+  });
+}
+
 module.exports = {
   swisseph,
   PLANETS,
   HOUSE_SYSTEM_CODES,
   julianDayUT,
   calcPlanetUT,
+  calcPlanetDeclination,
   calcHouses,
   ayanamsaLahiri,
 };
