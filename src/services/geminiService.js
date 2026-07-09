@@ -80,9 +80,89 @@ async function generateText({ systemPrompt, userMessage, maxTokens = 512 }) {
   return result.response.text();
 }
 
+/** Non-streaming helper for background chat messages. */
+async function generateChatText({ systemPrompt, history = [], userMessage, maxTokens = 512 }) {
+  const model = genAI.getGenerativeModel({
+    model: config.gemini.model,
+    systemInstruction: systemPrompt,
+  });
+
+  const chat = model.startChat({
+    history: formatGeminiHistory(history),
+  });
+
+  const result = await chat.sendMessage(userMessage);
+  return result.response.text();
+}
+
+function buildTarotReadingSystemPrompt({ chart, cards, question }) {
+  let chartContext = '';
+  if (chart) {
+    chartContext = `
+USER BIRTH CHART CONTEXT:
+- Sun: ${chart.sunSign || 'Unknown'}
+- Moon: ${chart.moonSign || 'Unknown'}
+- Rising: ${chart.risingSign || 'Unknown'}
+`;
+  }
+
+  const cardsSummary = cards
+    .map((c, i) => {
+      const orientation = c.reversed ? 'Reversed' : 'Upright';
+      const meaning = c.reversed ? c.card.reversedMeaning : c.card.uprightMeaning;
+      return `- Card ${i + 1} (${c.position.toUpperCase()}): "${c.card.name}" (${orientation}). Base meaning: ${meaning}`;
+    })
+    .join('\n');
+
+  return `You are Cosmic, an expert AI tarot reader who blends rich tarot symbolism with astrology. You are warm, intuitive, and speak in a friendly but mystical tone.
+
+The user has asked the following question: "${question}"
+${chartContext}
+They drew the following 3-card spread:
+${cardsSummary}
+
+Please provide a very brief and beautiful reading.
+Address the question by synthesizing the meaning of the cards.
+Keep the tone supportive and mystical. Write ONLY 2-3 sentences in total. Speak directly to the user using "your" and "you". Do not give medical, legal, or financial advice.`;
+}
+
+function buildTarotContinueSystemPrompt({ chart, cards, question }) {
+  let chartContext = '';
+  if (chart) {
+    chartContext = `
+USER BIRTH CHART CONTEXT:
+- Sun: ${chart.sunSign || 'Unknown'}
+- Moon: ${chart.moonSign || 'Unknown'}
+- Rising: ${chart.risingSign || 'Unknown'}
+`;
+  }
+
+  const cardsSummary = cards
+    .map((c, i) => {
+      const orientation = c.reversed ? 'Reversed' : 'Upright';
+      const meaning = c.reversed ? c.card.reversedMeaning : c.card.uprightMeaning;
+      return `- Card ${i + 1} (${c.position.toUpperCase()}): "${c.card.name}" (${orientation}). Base meaning: ${meaning}`;
+    })
+    .join('\n');
+
+  return `You are Cosmic, an expert AI tarot reader who blends rich tarot symbolism with astrology. You are warm, intuitive, and speak in a friendly but mystical tone.
+
+The user is engaged in a follow-up conversation regarding a tarot reading session.
+Their initial question was: "${question}"
+${chartContext}
+The 3-card spread drawn was:
+${cardsSummary}
+
+Please address their follow-up questions/remarks in accordance with the tarot cards drawn and the birth chart context. Keep the conversation flowing naturally, offering deep wisdom and specific guidance. Keep your response extremely brief, strictly 2-3 sentences. Do not give medical, legal, or financial advice.`;
+}
+
 module.exports = {
   buildAstrologerSystemPrompt,
   buildTutorSystemPrompt,
   streamChatCompletion,
   generateText,
+  generateChatText,
+  buildTarotReadingSystemPrompt,
+  buildTarotContinueSystemPrompt,
 };
+

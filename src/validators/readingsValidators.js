@@ -7,4 +7,34 @@ const chartIdQuery = { query: Joi.object({ chartId: objectId.required() }) };
 const phaseParam = { params: Joi.object({ phase: Joi.string().valid('new', 'full') }) };
 const numberParam = { params: Joi.object({ number: Joi.string().pattern(/^\d{1,6}$/).required() }) };
 
-module.exports = { tarotQuery, chartIdQuery, phaseParam, numberParam };
+const tarotNewReading = {
+  body: Joi.object({
+    question: Joi.string().required().min(1),
+    chartId: objectId.optional(),
+  }),
+};
+
+const tarotContinueReading = {
+  body: Joi.object({
+    readingId: objectId.required(),
+    message: Joi.string().optional().min(1),
+    question: Joi.string().optional().min(1),
+  }).or('message', 'question'),
+};
+
+const tarotReadingIdParam = {
+  params: Joi.object({
+    id: objectId.required(),
+  }),
+};
+
+module.exports = {
+  tarotQuery,
+  chartIdQuery,
+  phaseParam,
+  numberParam,
+  tarotNewReading,
+  tarotContinueReading,
+  tarotReadingIdParam,
+};
+
