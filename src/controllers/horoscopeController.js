@@ -64,15 +64,29 @@ async function getWeeklyHoroscope(req, res) {
   sendSuccess(res, { data: doc });
 }
 
-/** GET /cosmic-weather/today?chartId= */
+/** GET /cosmic-weather/today?chartId=&lat=&lng=&timezone=&date= */
 async function getCosmicWeatherToday(req, res) {
-  const { chartId } = req.query;
+  const { chartId, lat, lng, timezone, date } = req.query;
   let natalPlanets = null;
+  let natalHouses = null;
   if (chartId) {
     const chart = await BirthChart.findOne({ _id: chartId, owner: req.userId });
-    natalPlanets = chart?.computed?.planets || null;
+    if (chart && chart.computed) {
+      natalPlanets = chart.computed.planets || null;
+      natalHouses = chart.computed.houses || null;
+    }
   }
-  const weather = await getCosmicWeather(natalPlanets);
+
+  const atDate = date ? new Date(date) : new Date();
+  const weather = await getCosmicWeather({
+    natalPlanets,
+    natalHouses,
+    atDate,
+    lat: lat ? parseFloat(lat) : null,
+    lng: lng ? parseFloat(lng) : null,
+    timezone,
+  });
+  
   sendSuccess(res, { data: weather });
 }
 

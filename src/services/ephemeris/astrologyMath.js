@@ -67,4 +67,21 @@ function computeAspects(pointsA, pointsB, skipSelfPairs = true, definitions = AS
   return aspects;
 }
 
-module.exports = { ZODIAC_SIGNS, longitudeToSign, ASPECT_DEFINITIONS, TRANSIT_ASPECT_DEFINITIONS, computeAspects, angularDifference };
+function formatDeclination(declination) {
+  const isSouth = declination < 0;
+  const absVal = Math.abs(declination);
+  const degrees = Math.floor(absVal);
+  const minutes = Math.round((absVal - degrees) * 60);
+  
+  let displayDegrees = degrees;
+  let displayMinutes = minutes;
+  if (displayMinutes === 60) {
+    displayDegrees += 1;
+    displayMinutes = 0;
+  }
+  
+  const direction = isSouth ? 'S' : 'N';
+  return `${displayDegrees}°${displayMinutes}' ${direction}`;
+}
+
+module.exports = { ZODIAC_SIGNS, longitudeToSign, ASPECT_DEFINITIONS, TRANSIT_ASPECT_DEFINITIONS, computeAspects, angularDifference, formatDeclination };

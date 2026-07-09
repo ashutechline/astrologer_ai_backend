@@ -2,10 +2,11 @@ const {
   PLANETS,
   julianDayUT,
   calcPlanetUT,
+  calcPlanetDeclination,
   calcHouses,
   ayanamsaLahiri,
 } = require('./swissEphemerisClient');
-const { longitudeToSign, computeAspects } = require('./astrologyMath');
+const { longitudeToSign, computeAspects, formatDeclination } = require('./astrologyMath');
 
 /**
  * Converts local birth date/time + UTC offset into a UTC Date.
@@ -73,6 +74,7 @@ async function calculateNatalChart(input) {
   const planets = [];
   for (const planet of PLANETS) {
     const body = await calcPlanetUT(jd, planet.id);
+    const decVal = await calcPlanetDeclination(jd, planet.id);
     let lon = body.longitude;
     if (zodiacSystem === 'vedic') {
       lon = ((lon - ayanamsa) % 360 + 360) % 360;
@@ -86,6 +88,8 @@ async function calculateNatalChart(input) {
       degreeInSign: Number(degreeInSign.toFixed(2)),
       speed: body.longitudeSpeed,
       retrograde: body.longitudeSpeed < 0,
+      declination: Number(decVal.toFixed(4)),
+      declinationFormatted: formatDeclination(decVal),
     });
   }
 

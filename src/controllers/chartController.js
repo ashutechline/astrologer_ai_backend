@@ -2,6 +2,7 @@ const BirthChart = require('../models/BirthChart');
 const ApiError = require('../utils/ApiError');
 const { sendSuccess } = require('../utils/apiResponse');
 const chartService = require('../services/birthChartService');
+const { enrichChartWithTransits } = require('../services/ephemeris/transitService');
 
 /** POST /charts */
 async function createChart(req, res) {
@@ -14,7 +15,8 @@ async function createChart(req, res) {
     await req.user.save();
   }
 
-  sendSuccess(res, { statusCode: 201, data: chart });
+  const enriched = await enrichChartWithTransits(chart);
+  sendSuccess(res, { statusCode: 201, data: enriched });
 }
 
 /** GET /charts */
@@ -27,7 +29,8 @@ async function listCharts(req, res) {
 async function getChart(req, res) {
   const chart = await BirthChart.findOne({ _id: req.params.chartId, owner: req.userId });
   if (!chart) throw ApiError.notFound('Chart not found', 'CHART_NOT_FOUND');
-  sendSuccess(res, { data: chart });
+  const enriched = await enrichChartWithTransits(chart);
+  sendSuccess(res, { data: enriched });
 }
 
 /** PATCH /charts/:chartId — updates inputs and recalculates */
@@ -54,7 +57,8 @@ async function updateChart(req, res) {
     await chart.save();
   }
 
-  sendSuccess(res, { data: chart });
+  const enriched = await enrichChartWithTransits(chart);
+  sendSuccess(res, { data: enriched });
 }
 
 /** DELETE /charts/:chartId */

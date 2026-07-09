@@ -1,3 +1,6 @@
+const SunCalc = require('suncalc');
+const moment = require('moment-timezone');
+const { find: findGeoTz } = require('geo-tz');
 const { calculateCurrentSky } = require('./ephemeris/transitService');
 const { angularDifference } = require('./ephemeris/astrologyMath');
 
@@ -13,23 +16,68 @@ const MOON_PHASES = [
   { name: 'New Moon', max: 360.01 },
 ];
 
+const TRANSIT_INTERPRETATIONS = {
+  1: 'Self Discovery',
+  2: 'Financial Focus',
+  3: 'Communication',
+  4: 'Home & Roots',
+  5: 'Creative Joy',
+  6: 'Assertive Work',
+  7: 'Relationships',
+  8: 'Deep Transformation',
+  9: 'Higher Learning',
+  10: 'Career Ambitions',
+  11: 'Social Networking',
+  12: 'Rest & Healing',
+};
+
 function getMoonPhaseName(sunLongitude, moonLongitude) {
   const elongation = ((moonLongitude - sunLongitude) % 360 + 360) % 360;
   return MOON_PHASES.find((p) => elongation <= p.max)?.name || 'New Moon';
 }
 
+function getTransitHouse(moonLongitude, natalHouses) {
+  if (!natalHouses || natalHouses.length !== 12) return null;
+  // Houses are assumed to be sorted by house number 1 to 12
+  for (let i = 0; i < 12; i++) {
+    const currentHouse = natalHouses[i];
+    const nextHouse = natalHouses[(i + 1) % 12];
+    
+    let start = currentHouse.longitude;
+    let end = nextHouse.longitude;
+    
+    // Handle wrapping around 360 degrees
+    if (end <= start) {
+      if (moonLongitude >= start || moonLongitude < end) {
+        return currentHouse.house;
+      }
+    } else {
+      if (moonLongitude >= start && moonLongitude < end) {
+        return currentHouse.house;
+      }
+    }
+  }
+  return null;
+}
+
+function formatTime(date, timezone) {
+  if (!date || isNaN(date.getTime())) return '-';
+  return moment(date).tz(timezone).format('h:mm A');
+}
+
 /**
  * Produces a simple 1-10 "cosmic energy" score for the Home dashboard.
- * Heuristic: counts harmonious aspects (trine/sextile) among the day's fast-moving
- * planets vs. tense ones (square/opposition) as a lightweight, explainable signal —
- * not a claim of astrological authority, just a stable, deterministic score for the UI.
+ * Also calculates Sun and Moon times, and Transit Moon if natal chart provided.
  */
-async function getCosmicWeather(natalPlanets = null, atDate = new Date()) {
+async function getCosmicWeather({ natalPlanets = null, natalHouses = null, atDate = new Date(), lat, lng, timezone = 'UTC' }) {
   const { planets } = await calculateCurrentSky(atDate);
   const sun = planets.find((p) => p.key === 'sun');
   const moon = planets.find((p) => p.key === 'moon');
 
   const moonPhase = getMoonPhaseName(sun.longitude, moon.longitude);
+  const moonDegree = Math.floor(moon.longitude % 30);
+  const moonMinute = Math.floor(((moon.longitude % 30) - moonDegree) * 60);
+  const moonDegreeStr = `${moonDegree}°${moonMinute.toString().padStart(2, '0')}'`;
 
   const fastPlanets = planets.filter((p) => ['sun', 'moon', 'mercury', 'venus', 'mars'].includes(p.key));
   let harmonious = 0;
@@ -43,10 +91,43 @@ async function getCosmicWeather(natalPlanets = null, atDate = new Date()) {
   }
   const score = Math.max(1, Math.min(10, 5 + harmonious - tense));
 
+  let actualTimezone = timezone;
+  
+  // SunCalc astronomical times
+  let sunrise = '-', sunset = '-', moonrise = '-', moonset = '-';
+  if (lat != null && lng != null) {
+    try {
+      const tzNames = findGeoTz(lat, lng);
+      if (tzNames && tzNames.length > 0) {
+        actualTimezone = tzNames[0]; // Resolves to a valid IANA string like 'Asia/Kolkata'
+      }
+    } catch (e) {
+      // fallback to the client-provided timezone or UTC
+    }
+
+    const sunTimes = SunCalc.getTimes(atDate, lat, lng);
+    sunrise = formatTime(sunTimes.sunrise, actualTimezone);
+    sunset = formatTime(sunTimes.sunset, actualTimezone);
+
+    const moonTimes = SunCalc.getMoonTimes(atDate, lat, lng);
+    moonrise = formatTime(moonTimes.rise, actualTimezone);
+    moonset = formatTime(moonTimes.set, actualTimezone);
+  }
+
+  const transitHouse = getTransitHouse(moon.longitude, natalHouses);
+  const transitInterpretation = transitHouse ? TRANSIT_INTERPRETATIONS[transitHouse] : null;
+
   return {
     moonPhase,
+    moonDegree: moonDegreeStr,
     sunSign: sun.sign,
     moonSign: moon.sign,
+    sunrise,
+    sunset,
+    moonrise,
+    moonset,
+    transitHouse,
+    transitInterpretation,
     energyScore: score,
     planetsSummary: planets.map((p) => `${p.name} in ${p.sign}${p.retrograde ? ' (Rx)' : ''}`),
   };

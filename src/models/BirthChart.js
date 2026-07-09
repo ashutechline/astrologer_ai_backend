@@ -11,6 +11,8 @@ const planetSchema = new Schema(
     speed: Number,
     retrograde: Boolean,
     house: Number,
+    declination: Number,
+    declinationFormatted: String,
   },
   { _id: false }
 );

@@ -66,18 +66,43 @@ async function* streamChatCompletion({ systemPrompt, history = [], userMessage }
 }
 
 /** Non-streaming helper for background jobs (daily horoscope generation, journal prompts, etc). */
-async function generateText({ systemPrompt, userMessage, maxTokens = 512 }) {
+async function generateText({ systemPrompt, userMessage, maxTokens = 512, maxRetries = 3 }) {
   const model = genAI.getGenerativeModel({
     model: config.gemini.model,
     systemInstruction: systemPrompt,
   });
 
-  const result = await model.generateContent({
-    contents: [{ role: 'user', parts: [{ text: userMessage }] }],
-    generationConfig: { maxOutputTokens: maxTokens },
-  });
-
-  return result.response.text();
+  let attempt = 0;
+  while (attempt <= maxRetries) {
+    try {
+      const result = await model.generateContent({
+        contents: [{ role: 'user', parts: [{ text: userMessage }] }],
+        generationConfig: { maxOutputTokens: maxTokens },
+      });
+      return result.response.text();
+    } catch (error) {
+      if (attempt === maxRetries) {
+        throw error;
+      }
+      
+      const errorMessage = error.message || '';
+      if (errorMessage.includes('429') || errorMessage.includes('503')) {
+        let retrySeconds = Math.pow(2, attempt) * 5; // Default: 5s, 10s, 20s
+        
+        // Extract retry from error message if available: "Please retry in 19.013517365s."
+        const match = errorMessage.match(/retry in ([\d\.]+)s/);
+        if (match && match[1]) {
+          retrySeconds = parseFloat(match[1]) + 1; // Add 1 second buffer
+        }
+        
+        console.warn(`[Gemini API] Rate limit or high demand (Attempt ${attempt + 1}/${maxRetries}). Retrying in ${retrySeconds.toFixed(1)}s...`);
+        await new Promise(res => setTimeout(res, retrySeconds * 1000));
+        attempt++;
+      } else {
+        throw error;
+      }
+    }
+  }
 }
 
 /** Non-streaming helper for background chat messages. */
