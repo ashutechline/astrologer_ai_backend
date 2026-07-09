@@ -7,15 +7,24 @@ const ZODIAC_SIGNS = [
 ];
 
 const signQuery = {
-  query: Joi.object({ sign: Joi.string().valid(...ZODIAC_SIGNS).required() }),
+  query: Joi.object({
+    sign: Joi.string().valid(...ZODIAC_SIGNS).required(),
+    date: Joi.string().optional(),
+  }),
 };
 
 const chartIdQuery = {
-  query: Joi.object({ chartId: objectId.required() }),
+  query: Joi.object({
+    chartId: objectId.required(),
+    date: Joi.string().optional(),
+  }),
 };
 
 const optionalChartIdQuery = {
-  query: Joi.object({ chartId: objectId }),
+  query: Joi.object({
+    chartId: objectId,
+    date: Joi.string().optional(),
+  }),
 };
 
 const cosmicWeatherQuery = {
@@ -28,4 +37,10 @@ const cosmicWeatherQuery = {
   }),
 };
 
-module.exports = { signQuery, chartIdQuery, optionalChartIdQuery, cosmicWeatherQuery, ZODIAC_SIGNS };
+const dateQuery = {
+  query: Joi.object({
+    date: Joi.string().optional(),
+  }),
+};
+
+module.exports = { signQuery, chartIdQuery, optionalChartIdQuery, cosmicWeatherQuery, dateQuery, ZODIAC_SIGNS };

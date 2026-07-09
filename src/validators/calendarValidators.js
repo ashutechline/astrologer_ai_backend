@@ -17,7 +17,10 @@ const dayQuery = {
 };
 
 const chartIdQuery = {
-  query: Joi.object({ chartId: objectId.required() }),
+  query: Joi.object({
+    chartId: objectId.required(),
+    date: Joi.string().optional(),
+  }),
 };
 
 const timelineQuery = {

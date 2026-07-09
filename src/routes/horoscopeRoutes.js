@@ -8,7 +8,7 @@ const router = express.Router();
 
 // Horoscopes are public/free — no auth required to read them
 router.get('/horoscopes/daily', validate(v.signQuery), ctrl.getDailyHoroscope);
-router.get('/horoscopes/daily/all', ctrl.getAllDailyHoroscopes);
+router.get('/horoscopes/daily/all', validate(v.dateQuery), ctrl.getAllDailyHoroscopes);
 router.get('/horoscopes/weekly', validate(v.signQuery), ctrl.getWeeklyHoroscope);
 
 // Cosmic weather and lucky widget are personalized — require auth

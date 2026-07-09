@@ -18,7 +18,16 @@ const categoryParam = {
 };
 
 const answerQuiz = {
-  body: Joi.object({ selectedIndex: Joi.number().integer().min(0).max(10).required() }),
+  body: Joi.object({
+    selectedIndex: Joi.number().integer().min(0).max(10).required(),
+    date: Joi.string().optional(),
+  }),
 };
 
-module.exports = { listCourses, courseIdParam, updateProgress, categoryParam, answerQuiz };
+const dailyQuizQuery = {
+  query: Joi.object({
+    date: Joi.string().optional(),
+  }),
+};
+
+module.exports = { listCourses, courseIdParam, updateProgress, categoryParam, answerQuiz, dailyQuizQuery };

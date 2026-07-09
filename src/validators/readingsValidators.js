@@ -2,8 +2,18 @@ const Joi = require('joi');
 
 const objectId = Joi.string().hex().length(24);
 
-const tarotQuery = { query: Joi.object({ chartId: objectId }) };
-const chartIdQuery = { query: Joi.object({ chartId: objectId.required() }) };
+const tarotQuery = {
+  query: Joi.object({
+    chartId: objectId,
+    date: Joi.string().optional(),
+  }),
+};
+const chartIdQuery = {
+  query: Joi.object({
+    chartId: objectId.required(),
+    date: Joi.string().optional(),
+  }),
+};
 const phaseParam = { params: Joi.object({ phase: Joi.string().valid('new', 'full') }) };
 const numberParam = { params: Joi.object({ number: Joi.string().pattern(/^\d{1,6}$/).required() }) };
 

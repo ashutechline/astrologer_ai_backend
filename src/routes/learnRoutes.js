@@ -15,7 +15,7 @@ router.get('/courses', requirePro, validate(v.listCourses), ctrl.listCourses);
 router.get('/courses/:id', requirePro, validate(v.courseIdParam), ctrl.getCourse);
 router.post('/courses/:id/progress', requirePro, validate(v.updateProgress), ctrl.updateProgress);
 
-router.get('/quiz/daily', requirePro, ctrl.getDailyQuiz);
+router.get('/quiz/daily', requirePro, validate(v.dailyQuizQuery), ctrl.getDailyQuiz);
 router.post('/quiz/daily/answer', requirePro, validate(v.answerQuiz), ctrl.answerDailyQuiz);
 router.get('/quiz/leaderboard', requirePro, ctrl.getLeaderboard);
 

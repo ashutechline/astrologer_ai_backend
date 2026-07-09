@@ -5,6 +5,16 @@ const { sendSuccess } = require('../utils/apiResponse');
 function todayKey() {
   return new Date().toISOString().slice(0, 10);
 }
+function getDateKey(dateParam) {
+  if (!dateParam) return todayKey();
+  try {
+    const d = new Date(dateParam);
+    if (isNaN(d.getTime())) return todayKey();
+    return d.toISOString().slice(0, 10);
+  } catch (e) {
+    return todayKey();
+  }
+}
 
 /** GET /learn/courses?track= */
 async function listCourses(req, res) {
@@ -62,12 +72,14 @@ async function getReference(req, res) {
   sendSuccess(res, { data: entries });
 }
 
-/** GET /learn/quiz/daily */
+/** GET /learn/quiz/daily?date= */
 async function getDailyQuiz(req, res) {
-  const question = await QuizQuestion.findOne({ date: todayKey() });
-  if (!question) throw ApiError.notFound('No quiz available for today', 'QUIZ_NOT_READY');
+  const { date } = req.query;
+  const dateKey = getDateKey(date);
+  const question = await QuizQuestion.findOne({ date: dateKey });
+  if (!question) throw ApiError.notFound(`No quiz available for date ${dateKey}`, 'QUIZ_NOT_READY');
 
-  const attempt = await QuizAttempt.findOne({ owner: req.userId, date: todayKey() });
+  const attempt = await QuizAttempt.findOne({ owner: req.userId, date: dateKey });
   // Hide the correct answer until the user has attempted it
   const payload = question.toObject();
   if (!attempt) delete payload.correctIndex;
@@ -77,14 +89,14 @@ async function getDailyQuiz(req, res) {
 
 /** POST /learn/quiz/daily/answer */
 async function answerDailyQuiz(req, res) {
-  const { selectedIndex } = req.body;
-  const dateKey = todayKey();
+  const { selectedIndex, date } = req.body;
+  const dateKey = getDateKey(date || req.query.date);
 
   const existing = await QuizAttempt.findOne({ owner: req.userId, date: dateKey });
-  if (existing) throw ApiError.conflict('You already answered today\'s quiz', 'QUIZ_ALREADY_ANSWERED');
+  if (existing) throw ApiError.conflict(`You already answered the quiz for date ${dateKey}`, 'QUIZ_ALREADY_ANSWERED');
 
   const question = await QuizQuestion.findOne({ date: dateKey });
-  if (!question) throw ApiError.notFound('No quiz available for today', 'QUIZ_NOT_READY');
+  if (!question) throw ApiError.notFound(`No quiz available for date ${dateKey}`, 'QUIZ_NOT_READY');
 
   const correct = selectedIndex === question.correctIndex;
   const attempt = await QuizAttempt.create({ owner: req.userId, date: dateKey, selectedIndex, correct });

@@ -9,6 +9,16 @@ const geminiService = require('../services/geminiService');
 function todayKey() {
   return new Date().toISOString().slice(0, 10);
 }
+function getDateKey(dateParam) {
+  if (!dateParam) return todayKey();
+  try {
+    const d = new Date(dateParam);
+    if (isNaN(d.getTime())) return todayKey();
+    return d.toISOString().slice(0, 10);
+  } catch (e) {
+    return todayKey();
+  }
+}
 function isoWeekKey(date = new Date()) {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
   d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
@@ -19,14 +29,14 @@ function isoWeekKey(date = new Date()) {
 
 /** GET /horoscopes/daily?sign=Aries */
 async function getDailyHoroscope(req, res) {
-  const { sign } = req.query;
-  const dateKey = todayKey();
+  const { sign, date } = req.query;
+  const dateKey = getDateKey(date);
   let doc = await Horoscope.findOne({ sign, period: 'daily', dateKey });
 
   if (!doc) {
     const content = await geminiService.generateText({
       systemPrompt: 'You are Cosmic, an expert AI astrologer. Write engaging, specific daily horoscopes — avoid generic filler.',
-      userMessage: `Write today's daily horoscope for ${sign} in 3-4 sentences. Cover general energy, and one practical tip for the day.`,
+      userMessage: `Write the daily horoscope for ${sign} on ${dateKey} in 3-4 sentences. Cover general energy, and one practical tip for the day.`,
       maxTokens: 1000,
     });
     doc = await Horoscope.create({ sign, period: 'daily', dateKey, content });
@@ -37,7 +47,8 @@ async function getDailyHoroscope(req, res) {
 
 /** GET /horoscopes/daily/all */
 async function getAllDailyHoroscopes(req, res) {
-  const dateKey = todayKey();
+  const { date } = req.query;
+  const dateKey = getDateKey(date);
   const docs = await Horoscope.find({ period: 'daily', dateKey });
   const bySign = Object.fromEntries(docs.map((d) => [d.sign, d]));
 
@@ -92,12 +103,13 @@ async function getCosmicWeatherToday(req, res) {
 
 /** GET /lucky/today?chartId= — deterministic per user per day so it doesn't change on refresh */
 async function getLuckyToday(req, res) {
-  const { chartId } = req.query;
+  const { chartId, date } = req.query;
   const chart = await BirthChart.findOne({ _id: chartId, owner: req.userId });
   if (!chart) throw ApiError.notFound('Chart not found', 'CHART_NOT_FOUND');
 
   const colors = ['Violet', 'Gold', 'Teal', 'Crimson', 'Emerald', 'Indigo', 'Coral', 'Silver'];
-  const seed = `${chart._id}-${todayKey()}`;
+  const dateKey = getDateKey(date);
+  const seed = `${chart._id}-${dateKey}`;
   let hash = 0;
   for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
 

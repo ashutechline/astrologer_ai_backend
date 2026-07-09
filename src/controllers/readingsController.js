@@ -7,6 +7,16 @@ const geminiService = require('../services/geminiService');
 function todayKey() {
   return new Date().toISOString().slice(0, 10);
 }
+function getDateKey(dateParam) {
+  if (!dateParam) return todayKey();
+  try {
+    const d = new Date(dateParam);
+    if (isNaN(d.getTime())) return todayKey();
+    return d.toISOString().slice(0, 10);
+  } catch (e) {
+    return todayKey();
+  }
+}
 
 /** Deterministic per-user-per-day hash so the draw doesn't change on refresh. */
 function deterministicIndex(seed, modulo) {
@@ -15,10 +25,10 @@ function deterministicIndex(seed, modulo) {
   return hash % modulo;
 }
 
-/** GET /tarot/daily?chartId= */
+/** GET /tarot/daily?chartId=&date= */
 async function getDailyTarot(req, res) {
-  const { chartId } = req.query;
-  const dateKey = todayKey();
+  const { chartId, date } = req.query;
+  const dateKey = getDateKey(date);
 
   let draw = await DailyTarotDraw.findOne({ owner: req.userId, dateKey }).populate('card');
   if (draw) return sendSuccess(res, { data: draw });
@@ -39,7 +49,7 @@ async function getDailyTarot(req, res) {
       aiInterpretation = await geminiService
         .generateText({
           systemPrompt: 'You are Cosmic, an expert AI tarot reader blending tarot symbolism with astrology.',
-          userMessage: `The user drew "${card.name}" (${reversed ? 'reversed' : 'upright'}). Base meaning: ${meaning}. Their Sun sign is ${chart.computed.sunSign} and Moon sign is ${chart.computed.moonSign}. Write a short, personalized 2-3 sentence interpretation for today.`,
+          userMessage: `The user drew "${card.name}" (${reversed ? 'reversed' : 'upright'}). Base meaning: ${meaning}. Their Sun sign is ${chart.computed.sunSign} and Moon sign is ${chart.computed.moonSign}. Write a short, personalized 2-3 sentence interpretation for ${dateKey}.`,
           maxTokens: 200,
         })
         .catch(() => null);
@@ -51,9 +61,9 @@ async function getDailyTarot(req, res) {
   sendSuccess(res, { statusCode: 201, data: draw });
 }
 
-/** GET /numerology/profile?chartId= */
+/** GET /numerology/profile?chartId=&date= */
 async function getNumerologyProfile(req, res) {
-  const { chartId } = req.query;
+  const { chartId, date } = req.query;
   const chart = await BirthChart.findOne({ _id: chartId, owner: req.userId });
   if (!chart) throw ApiError.notFound('Chart not found', 'CHART_NOT_FOUND');
 
@@ -67,9 +77,12 @@ async function getNumerologyProfile(req, res) {
 
   const lifePathNumber = digitSum(chart.birthDate);
 
-  const today = new Date();
+  let targetDate = date ? new Date(date) : new Date();
+  if (isNaN(targetDate.getTime())) targetDate = new Date();
+  const targetYear = targetDate.getUTCFullYear();
+
   const [, month, day] = chart.birthDate.split('-');
-  const personalYearSeed = `${day}${month}${today.getUTCFullYear()}`;
+  const personalYearSeed = `${day}${month}${targetYear}`;
   const personalYearNumber = digitSum(personalYearSeed);
 
   const lifePathDescription = "Represents your core purpose and primary path in this incarnation.";
@@ -81,7 +94,7 @@ async function getNumerologyProfile(req, res) {
       lifePathDescription,
       personalYearNumber, 
       personalYearDescription,
-      year: today.getUTCFullYear() 
+      year: targetYear 
     } 
   });
 }

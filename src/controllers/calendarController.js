@@ -42,13 +42,16 @@ async function getDayDetail(req, res) {
   sendSuccess(res, { data: { date, events } });
 }
 
-/** GET /transits/live?chartId= */
+/** GET /transits/live?chartId=&date= */
 async function getLiveTransits(req, res) {
-  const { chartId } = req.query;
+  const { chartId, date } = req.query;
   const chart = await BirthChart.findOne({ _id: chartId, owner: req.userId });
   if (!chart) throw ApiError.notFound('Chart not found', 'CHART_NOT_FOUND');
 
-  const { transitJd, transits } = await calculateLiveTransits(chart.computed.planets);
+  let targetDate = date ? new Date(date) : new Date();
+  if (isNaN(targetDate.getTime())) targetDate = new Date();
+
+  const { transitJd, transits } = await calculateLiveTransits(chart.computed.planets, targetDate);
   sendSuccess(res, {
     data: {
       calculation_metadata: {

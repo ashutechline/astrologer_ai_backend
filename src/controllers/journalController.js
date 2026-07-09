@@ -65,22 +65,29 @@ async function deleteEntry(req, res) {
   sendSuccess(res, { data: { deleted: true } });
 }
 
-/** GET /journal/prompt-of-the-day?chartId= */
+/** GET /journal/prompt-of-the-day?chartId=&date= */
 async function getPromptOfTheDay(req, res) {
-  const { chartId } = req.query;
+  const { chartId, date } = req.query;
   const chart = await BirthChart.findOne({ _id: chartId, owner: req.userId });
   if (!chart) throw ApiError.notFound('Chart not found', 'CHART_NOT_FOUND');
 
-  const transits = await calculateLiveTransits(chart.computed.planets).catch(() => []);
-  const transitsSummary = transits.slice(0, 3).map((t) => `${t.transitPlanet} ${t.aspect} natal ${t.natalPlanet}`).join('; ');
+  let targetDate = date ? new Date(date) : new Date();
+  if (isNaN(targetDate.getTime())) targetDate = new Date();
+
+  const transitsResult = await calculateLiveTransits(chart.computed.planets, targetDate).catch(() => null);
+  const transits = transitsResult ? (transitsResult.transits || []) : [];
+  const transitsSummary = transits
+    .slice(0, 3)
+    .map((t) => `${t.transiting_planet || t.transitPlanet} ${t.aspect_type || t.aspect} natal ${t.natal_planet || t.natalPlanet}`)
+    .join('; ');
 
   const prompt = await geminiService.generateText({
     systemPrompt: 'You are Cosmic, an AI astrologer who writes thoughtful, open-ended journaling prompts tied to current astrological transits.',
-    userMessage: `Write ONE short, reflective journal prompt (1-2 sentences) for someone with Sun in ${chart.computed.sunSign} and Moon in ${chart.computed.moonSign}, given these current transits: ${transitsSummary || 'no major transits today'}.`,
+    userMessage: `Write ONE short, reflective journal prompt (1-2 sentences) for someone with Sun in ${chart.computed.sunSign} and Moon in ${chart.computed.moonSign}, given these transits: ${transitsSummary || 'no major transits for that day'}.`,
     maxTokens: 100,
   });
 
-  sendSuccess(res, { data: { prompt, date: new Date().toISOString().slice(0, 10) } });
+  sendSuccess(res, { data: { prompt, date: targetDate.toISOString().slice(0, 10) } });
 }
 
 /** GET /journal/monthly-reflection?month=YYYY-MM */

@@ -31,7 +31,12 @@ const updateEntry = {
 
 const idParam = { params: Joi.object({ id: objectId.required() }) };
 
-const promptQuery = { query: Joi.object({ chartId: objectId.required() }) };
+const promptQuery = {
+  query: Joi.object({
+    chartId: objectId.required(),
+    date: Joi.string().optional(),
+  }),
+};
 
 const monthlyReflectionQuery = { query: Joi.object({ month: Joi.string().pattern(/^\d{4}-\d{2}$/).required() }) };
 
