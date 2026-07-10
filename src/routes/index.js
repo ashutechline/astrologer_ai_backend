@@ -19,4 +19,5 @@ router.use('/billing', require('./billingRoutes'));
 router.use('/settings', require('./settingsRoutes'));
 router.use('/', require('./uploadRoutes')); // mounts /upload-file
 
+router.use('/ephemeris', require('./ephemerisRoutes'));
 module.exports = router;
