@@ -20,4 +20,6 @@ router.use('/settings', require('./settingsRoutes'));
 router.use('/', require('./uploadRoutes')); // mounts /upload-file
 
 router.use('/ephemeris', require('./ephemerisRoutes'));
+router.use('/moon-phases', require('./moonPhaseRoutes'));
+router.use('/lunations', require('./lunationRoutes'));
 module.exports = router;
