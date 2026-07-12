@@ -48,4 +48,11 @@ async function registerFcmToken(req, res) {
   sendSuccess(res, { data: { registered: true } });
 }
 
-module.exports = { getMe, updateMe, deleteMe, exportMe, registerFcmToken };
+/** POST /users/me/complete-profile */
+async function completeProfile(req, res) {
+  req.user.isProfileComplete = true;
+  await req.user.save();
+  sendSuccess(res, { data: req.user.toPublicJSON() });
+}
+
+module.exports = { getMe, updateMe, deleteMe, exportMe, registerFcmToken, completeProfile };

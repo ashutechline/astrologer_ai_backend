@@ -24,6 +24,7 @@ const userSchema = new Schema(
     appleId: { type: String, index: true, sparse: true },
 
     isGuest: { type: Boolean, default: false },
+    isProfileComplete: { type: Boolean, default: false },
 
     // Preferences (Settings screen)
     preferences: {
@@ -78,6 +79,7 @@ userSchema.methods.toPublicJSON = function toPublicJSON() {
     avatarUrl: this.avatarUrl,
     locale: this.locale,
     isGuest: this.isGuest,
+    isProfileComplete: this.isProfileComplete,
     preferences: this.preferences,
     subscription: {
       isPro: this.subscription.isPro,
