@@ -26,3 +26,7 @@ dist/
 build/
 coverage/
 .nyc_output/
+
+# Firebase service account credentials (NEVER commit these)
+*firebase-adminsdk*.json
+*.serviceaccount.json

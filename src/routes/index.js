@@ -5,7 +5,7 @@ const router = express.Router();
 router.use('/cities', require('./cityRoutes'));
 router.use('/auth', require('./authRoutes'));
 router.use('/users', require('./userRoutes'));
-router.use('/notifications', require('./notificationRoutes'));
+router.use('/', require('./notificationRoutes')); // mounts /notifications/* and /delete-notifications/*
 router.use('/charts', require('./chartRoutes'));
 router.use('/ai', require('./aiChatRoutes'));
 router.use('/', require('./horoscopeRoutes')); // mounts /horoscopes/*, /cosmic-weather/*, /lucky/*

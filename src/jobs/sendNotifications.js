@@ -2,6 +2,7 @@ const User = require('../models/User');
 const BirthChart = require('../models/BirthChart');
 const { Horoscope, CalendarEvent } = require('../models/Content');
 const { sendPushToTokens } = require('../services/pushNotificationService');
+const Notification = require('../models/Notification');
 const logger = require('../config/logger');
 
 function todayKey() {
@@ -29,10 +30,22 @@ async function sendDailyHoroscopeNotifications() {
     const horoscope = await Horoscope.findOne({ sign: sunSign, period: 'daily', dateKey: todayKey() });
     if (!horoscope) continue;
 
+    const title = `Your ${sunSign} horoscope is ready`;
+    const body = horoscope.content.slice(0, 100);
+    const data = { type: 'daily_horoscope', sign: sunSign };
+
+    await Notification.create({
+      user: user._id,
+      title,
+      body,
+      data,
+      isRead: false,
+    });
+
     await sendPushToTokens(user.fcmTokens, {
-      title: `Your ${sunSign} horoscope is ready`,
-      body: horoscope.content.slice(0, 100),
-      data: { type: 'daily_horoscope', sign: sunSign },
+      title,
+      body,
+      data,
     });
   }
   logger.info(`Daily horoscope notifications dispatched to ${users.length} users`);
@@ -54,10 +67,25 @@ async function sendMoonAlertNotifications() {
   if (tokens.length === 0) return;
 
   for (const event of todayEvents) {
+    const title = event.title;
+    const body = event.description || 'A significant lunar event is happening today.';
+    const data = { type: 'moon_alert', eventType: event.type };
+
+    const notificationDocs = users.map((u) => ({
+      user: u._id,
+      title,
+      body,
+      data,
+      isRead: false,
+    }));
+    if (notificationDocs.length > 0) {
+      await Notification.insertMany(notificationDocs);
+    }
+
     await sendPushToTokens(tokens, {
-      title: event.title,
-      body: event.description || 'A significant lunar event is happening today.',
-      data: { type: 'moon_alert', eventType: event.type },
+      title,
+      body,
+      data,
     });
   }
 }
@@ -79,10 +107,25 @@ async function sendRetrogradeWarningNotifications() {
 
   for (const event of todayEvents) {
     const verb = event.type === 'retrograde_start' ? 'goes retrograde' : 'turns direct';
+    const title = `${event.planet} ${verb} today`;
+    const body = event.description || `Heads up — ${event.planet} ${verb} today.`;
+    const data = { type: 'retrograde', planet: event.planet, eventType: event.type };
+
+    const notificationDocs = users.map((u) => ({
+      user: u._id,
+      title,
+      body,
+      data,
+      isRead: false,
+    }));
+    if (notificationDocs.length > 0) {
+      await Notification.insertMany(notificationDocs);
+    }
+
     await sendPushToTokens(tokens, {
-      title: `${event.planet} ${verb} today`,
-      body: event.description || `Heads up — ${event.planet} ${verb} today.`,
-      data: { type: 'retrograde', planet: event.planet, eventType: event.type },
+      title,
+      body,
+      data,
     });
   }
 }
