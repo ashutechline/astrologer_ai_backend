@@ -2,16 +2,13 @@ const jwt = require('jsonwebtoken');
 const config = require('../config/env');
 
 function signAccessToken(user) {
-  return jwt.sign({ sub: user._id.toString(), isPro: user.subscription.isPro }, config.jwt.accessSecret, {
-    expiresIn: config.jwt.accessExpiresIn,
-  });
+  return jwt.sign({ sub: user._id.toString(), isPro: user.subscription.isPro }, config.jwt.accessSecret);
 }
 
 function signRefreshToken(user) {
   return jwt.sign(
     { sub: user._id.toString(), v: user.refreshTokenVersion },
-    config.jwt.refreshSecret,
-    { expiresIn: config.jwt.refreshExpiresIn }
+    config.jwt.refreshSecret
   );
 }
 

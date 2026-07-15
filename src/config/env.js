@@ -27,8 +27,6 @@ const config = {
   jwt: {
     accessSecret: required('JWT_ACCESS_SECRET', 'dev_access_secret'),
     refreshSecret: required('JWT_REFRESH_SECRET', 'dev_refresh_secret'),
-    accessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '15m',
-    refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d',
   },
 
   social: {
