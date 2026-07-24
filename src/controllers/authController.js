@@ -72,7 +72,8 @@ async function socialLogin(req, res) {
 /** POST /auth/guest */
 async function guestLogin(req, res) {
   const { name } = req.body;
-  const user = await User.create({ name, isGuest: true });
+  const guestEmail = `guest_${Date.now()}_${Math.random().toString(36).substring(2, 8)}@guest.local`;
+  const user = await User.create({ name, email: guestEmail, isGuest: true });
   const tokens = issueTokenPair(user);
   sendSuccess(res, { statusCode: 201, data: { user: user.toPublicJSON(), ...tokens } });
 }

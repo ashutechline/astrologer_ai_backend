@@ -3,6 +3,9 @@ const config = require('./env');
 const logger = require('./logger');
 
 async function connectDB() {
+  // Workaround for Windows/Node.js DNS querySrv ECONNREFUSED error
+  require('dns').setServers(['8.8.8.8', '8.8.4.4']);
+
   mongoose.set('strictQuery', true);
 
   mongoose.connection.on('connected', () => logger.info('MongoDB connected'));
